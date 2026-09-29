@@ -3,3 +3,6 @@ node_modules
 .env
 coverage
 playwright-report
+
+tsconfig.tsbuildinfo
+next-env.d.ts
