@@ -1,0 +1,18 @@
+CREATE TYPE "AccountType" AS ENUM ('ASSET','LIABILITY','EQUITY','INCOME','EXPENSE');
+CREATE TYPE "BalanceSide" AS ENUM ('DEBIT','CREDIT');
+CREATE TYPE "JournalSource" AS ENUM ('MANUAL','INVOICE','PAYMENT','EXPENSE','REVERSAL','OPENING');
+CREATE TYPE "InvoiceStatus" AS ENUM ('DRAFT','POSTED','PAID','VOID');
+CREATE TABLE "Account" ("id" TEXT PRIMARY KEY,"code" TEXT NOT NULL UNIQUE,"name" TEXT NOT NULL,"type" "AccountType" NOT NULL,"normalBalance" "BalanceSide" NOT NULL,"isActive" BOOLEAN NOT NULL DEFAULT true,"isSystem" BOOLEAN NOT NULL DEFAULT false);
+CREATE TABLE "JournalEntry" ("id" TEXT PRIMARY KEY,"entryNo" INTEGER NOT NULL UNIQUE,"date" TIMESTAMP(3) NOT NULL,"memo" TEXT NOT NULL,"source" "JournalSource" NOT NULL,"sourceRef" TEXT,"reversalOfId" TEXT UNIQUE,"prevHash" TEXT NOT NULL,"hash" TEXT NOT NULL,"createdBy" TEXT NOT NULL,"createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP);
+CREATE TABLE "JournalLine" ("id" TEXT PRIMARY KEY,"entryId" TEXT NOT NULL REFERENCES "JournalEntry"("id"),"accountId" TEXT NOT NULL REFERENCES "Account"("id"),"debit" BIGINT NOT NULL DEFAULT 0,"credit" BIGINT NOT NULL DEFAULT 0,"description" TEXT);
+CREATE INDEX "JournalLine_accountId_idx" ON "JournalLine"("accountId"); CREATE INDEX "JournalEntry_date_idx" ON "JournalEntry"("date"); CREATE INDEX "JournalEntry_source_idx" ON "JournalEntry"("source");
+CREATE TABLE "Invoice" ("id" TEXT PRIMARY KEY,"number" TEXT NOT NULL UNIQUE,"customerName" TEXT NOT NULL,"customerGstin" TEXT,"placeOfSupply" TEXT NOT NULL,"issueDate" TIMESTAMP(3) NOT NULL,"dueDate" TIMESTAMP(3) NOT NULL,"status" "InvoiceStatus" NOT NULL,"subtotal" BIGINT NOT NULL,"cgst" BIGINT NOT NULL,"sgst" BIGINT NOT NULL,"igst" BIGINT NOT NULL,"total" BIGINT NOT NULL,"postingEntryId" TEXT,"paymentEntryId" TEXT,"voidEntryId" TEXT);
+CREATE TABLE "InvoiceLine" ("id" TEXT PRIMARY KEY,"invoiceId" TEXT NOT NULL REFERENCES "Invoice"("id"),"description" TEXT NOT NULL,"qty" DECIMAL(18,4) NOT NULL,"unitPrice" BIGINT NOT NULL,"gstRate" DECIMAL(5,2) NOT NULL,"amount" BIGINT NOT NULL);
+CREATE TABLE "Expense" ("id" TEXT PRIMARY KEY,"date" TIMESTAMP(3) NOT NULL,"vendor" TEXT NOT NULL,"accountId" TEXT NOT NULL,"amount" BIGINT NOT NULL,"gstInput" BIGINT NOT NULL,"paidFromAccountId" TEXT NOT NULL,"note" TEXT,"entryId" TEXT NOT NULL);
+CREATE TABLE "Counter" ("name" TEXT PRIMARY KEY,"value" INTEGER NOT NULL);
+ALTER TABLE "JournalLine" ADD CONSTRAINT "JournalLine_amount_check" CHECK ("debit">=0 AND "credit">=0 AND (("debit"=0) <> ("credit"=0)));
+CREATE FUNCTION prevent_journal_mutation() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'journal is append-only'; END; $$;
+CREATE TRIGGER journal_entry_immutable BEFORE UPDATE OR DELETE ON "JournalEntry" FOR EACH ROW EXECUTE FUNCTION prevent_journal_mutation();
+CREATE TRIGGER journal_line_immutable BEFORE UPDATE OR DELETE ON "JournalLine" FOR EACH ROW EXECUTE FUNCTION prevent_journal_mutation();
+CREATE FUNCTION check_journal_balance() RETURNS trigger LANGUAGE plpgsql AS $$ DECLARE target_id TEXT; line_count BIGINT; d NUMERIC; c NUMERIC; BEGIN target_id := COALESCE(NEW."entryId", OLD."entryId"); SELECT COUNT(*), COALESCE(SUM("debit"),0), COALESCE(SUM("credit"),0) INTO line_count,d,c FROM "JournalLine" WHERE "entryId"=target_id; IF line_count<2 OR d<>c THEN RAISE EXCEPTION 'journal entry must have at least two balanced lines'; END IF; RETURN NULL; END; $$;
+CREATE CONSTRAINT TRIGGER journal_balance_deferred AFTER INSERT OR UPDATE OR DELETE ON "JournalLine" DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION check_journal_balance();
