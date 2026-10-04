@@ -1,4 +1,0 @@
-@tailwind base; @tailwind components; @tailwind utilities;
-:root{--background:0 0% 100%;--foreground:222 47% 11%;--credit:160 84% 39%;--debit:350 89% 60%;--warning:38 92% 50%}
-.dark{--background:222 47% 8%;--foreground:210 40% 98%}
-body{background:hsl(var(--background));color:hsl(var(--foreground));font-variant-numeric:tabular-nums}
