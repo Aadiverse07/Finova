@@ -1,0 +1,5 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { extractionSchema } from '@/lib/receipt/types';
+import { validateExtraction } from '@/lib/receipt/validation';
+/** Provider-neutral ingestion contract for email/WhatsApp gateways. Configure a gateway secret before enabling it. */
+export async function POST(req: NextRequest){const expected=process.env.FINOVA_RECEIPT_INGEST_SECRET;if(!expected)return NextResponse.json({error:'Receipt ingestion is not configured.'},{status:503});if(req.headers.get('x-finova-ingest-secret')!==expected)return NextResponse.json({error:'Unauthorized'},{status:401});const body=await req.json().catch(()=>null);if(!body||typeof body!=='object')return NextResponse.json({error:'Invalid JSON'},{status:400});const parsed=extractionSchema.safeParse((body as {extraction?:unknown}).extraction);if(!parsed.success)return NextResponse.json({error:'Invalid extraction payload'},{status:400});return NextResponse.json({accepted:true,extraction:validateExtraction(parsed.data),receivedAt:new Date().toISOString()},{status:202});}

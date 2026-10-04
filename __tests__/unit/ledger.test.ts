@@ -1,0 +1,3 @@
+import {describe,it,expect} from 'vitest';
+import {validate} from '@/lib/ledger';
+describe('ledger validation',()=>{const accounts=new Map([['cash',{id:'cash',isActive:true}],['sales',{id:'sales',isActive:true}]]);it('rejects unbalanced entries with exact difference',()=>{try{validate({date:'2026-09-28',memo:'x',source:'MANUAL',lines:[{accountId:'cash',debit:500,credit:0},{accountId:'sales',debit:0,credit:400}]},accounts);throw Error('expected rejection')}catch(e){expect(e).toMatchObject({code:'UNBALANCED',details:{difference:100}})}});it('rejects a single line',()=>{expect(()=>validate({date:'2026-09-28',memo:'x',source:'MANUAL',lines:[{accountId:'cash',debit:1,credit:0}]},accounts)).toThrow()})});

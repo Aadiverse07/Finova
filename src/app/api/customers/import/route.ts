@@ -1,0 +1,2 @@
+import { NextRequest } from 'next/server'; import { ok, fail } from '@/lib/api/response'; import { withOrgAuth } from '@/lib/api/withOrgAuth';
+export const POST=withOrgAuth(async(_ctx,req:NextRequest)=>{const body=await req.json();const rows=Array.isArray(body.rows)?body.rows:[];const headers=rows[0]?Object.keys(rows[0]):[];const required=['displayName'];const invalid=required.filter(x=>!headers.includes(x));if(invalid.length)return fail(`Missing required columns: ${invalid.join(', ')}`,400);return ok({accepted:rows.length,rejected:0,duplicates:0,rows});});

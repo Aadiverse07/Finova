@@ -1,0 +1,41 @@
+.finova-login-backdrop { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; padding: 20px; background: rgba(8, 12, 30, .58); backdrop-filter: blur(10px); animation: finova-login-fade .2s ease both; }
+.finova-login-modal { width: min(470px, 100%); max-height: min(760px, calc(100vh - 32px)); overflow: auto; position: relative; border: 1px solid color-mix(in srgb, var(--lp-text, var(--foreground, #171b2e)) 12%, transparent); border-radius: 24px; padding: 30px; background: var(--lp-bg, var(--panel, #fff)); color: var(--lp-text, var(--foreground, #171b2e)); box-shadow: 0 30px 90px rgba(15, 20, 55, .25); animation: finova-login-scale .24s cubic-bezier(.2,.8,.2,1) both; }
+.finova-login-close { position: absolute; top: 17px; right: 17px; width: 36px; height: 36px; display: grid; place-items: center; border: 1px solid color-mix(in srgb, currentColor 12%, transparent); border-radius: 10px; background: transparent; color: inherit; cursor: pointer; transition: background .18s, transform .18s; }
+.finova-login-close:hover { background: color-mix(in srgb, currentColor 7%, transparent); transform: rotate(4deg); }
+.finova-login-brand { display: inline-flex; align-items: center; gap: 8px; color: #6977f7; font-size:12px; font-weight: 800; letter-spacing: .16em; }
+.finova-login-heading h2 { margin: 11px 0 5px; font-size:29px; letter-spacing: -.035em; }
+.finova-login-heading p { margin: 0; color: color-mix(in srgb, currentColor 58%, transparent); font-size:16px; line-height: 1.5; }
+.finova-login-progress { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin: 22px 0 24px; }
+.finova-login-progress span { height: 4px; border-radius: 999px; background: color-mix(in srgb, currentColor 10%, transparent); font-size: 0; }
+.finova-login-progress span.is-active { background: linear-gradient(90deg,#8a5cf6,#4f9bff); }
+.finova-login-step { display: grid; gap: 14px; }
+.finova-login-back { justify-self: start; display: inline-flex; align-items: center; gap: 6px; border: 0; padding: 0; background: transparent; color: color-mix(in srgb, currentColor 58%, transparent); font: inherit; font-size:15px; cursor: pointer; }
+.finova-login-back:hover, .finova-login-link:hover { color: #6675f5; }
+.finova-login-step label { display: grid; gap: 7px; font-size:14px; font-weight: 700; }
+.finova-login-step input { width: 100%; min-height: 46px; border: 1px solid color-mix(in srgb, currentColor 13%, transparent); border-radius: 12px; background: color-mix(in srgb, currentColor 2%, transparent); color: inherit; padding: 0 13px; font: inherit; outline: none; transition: border-color .18s, box-shadow .18s, background .18s; }
+.finova-login-step input:focus { border-color: #7180ff; box-shadow: 0 0 0 4px rgba(113,128,255,.12); }
+.finova-login-row { display: flex; justify-content: flex-end; }
+.finova-login-link { border: 0; background: transparent; color: #6675f5; font: inherit; font-size:14px; font-weight: 700; cursor: pointer; }
+.finova-login-primary { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: 12px; background: linear-gradient(100deg,#8a5cf6,#5d6cf8 55%,#3d8bff); color: #fff; font: inherit; font-weight: 750; cursor: pointer; box-shadow: 0 10px 26px rgba(93,108,248,.28); transition: transform .18s, filter .18s, opacity .18s; }
+.finova-login-primary:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.05); }
+.finova-login-primary:disabled, .finova-login-close:disabled, .finova-login-back:disabled { cursor: not-allowed; opacity: .55; }
+.finova-login-error, .finova-login-notice { margin: 0; padding: 10px 12px; border-radius: 10px; font-size:14px; line-height: 1.45; }
+.finova-login-error { color: #c23f59; background: rgba(220,70,100,.09); border: 1px solid rgba(220,70,100,.14); }
+.finova-login-notice { color: #28745e; background: rgba(30,170,125,.09); border: 1px solid rgba(30,170,125,.14); }
+.finova-login-success { text-align: center; padding: 18px 4px 4px; }
+.finova-success-icon { width: 68px; height: 68px; margin: 0 auto 7px; display: grid; place-items: center; border-radius: 50%; color: #20a97d; background: rgba(32,169,125,.1); }
+.finova-login-success h3 { margin: 4px 0 0; font-size:21px; }
+.finova-login-success p { margin: 6px 0 5px; color: color-mix(in srgb, currentColor 58%, transparent); font-size:15px; line-height: 1.5; }
+.finova-login-enter { animation: finova-login-slide .2s ease both; }
+@keyframes finova-login-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes finova-login-scale { from { opacity: 0; transform: scale(.97); } to { opacity: 1; transform: scale(1); } }
+@keyframes finova-login-slide { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: translateX(0); } }
+@media (max-width: 560px) { .finova-login-modal { padding: 24px 18px; border-radius: 20px; } .finova-login-heading h2 { font-size:25px; } }
+@media (prefers-reduced-motion: reduce) { .finova-login-backdrop, .finova-login-modal, .finova-login-enter { animation: none; } .finova-login-primary, .finova-login-close { transition: none; } }
+.finova-login-step input[aria-invalid="true"] { border-color: rgba(220,70,100,.55); }
+.finova-login-identity { display: flex; align-items: center; gap: 7px; margin: 0; padding: 10px 12px; border-radius: 10px; font-size:15px; background: color-mix(in srgb, currentColor 4%, transparent); overflow-wrap: anywhere; }
+.finova-spin { animation: finova-spin .8s linear infinite; }
+@keyframes finova-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .finova-spin { animation-duration: 1.6s; } }
+
+.finova-auth-switch{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;background:color-mix(in srgb,currentColor 4%,transparent);border:1px solid color-mix(in srgb,currentColor 9%,transparent);border-radius:12px;margin:20px 0 18px}.finova-auth-switch button{border:0;background:transparent;color:color-mix(in srgb,currentColor 62%,transparent);padding:10px;border-radius:9px;font-weight:750;cursor:pointer}.finova-auth-switch button.active{background:var(--panel-soft,#f6f8fc);color:var(--foreground);box-shadow:0 2px 8px rgba(15,35,70,.07)}.finova-mode-cards{display:grid;gap:10px}.finova-mode-card{display:grid;gap:4px;text-align:left;border:1px solid var(--border,#e5e7eb);background:var(--panel-soft,#f8faff);color:inherit;border-radius:14px;padding:16px;cursor:pointer}.finova-mode-card strong{font-size:16px}.finova-mode-card span{font-size:14px;color:var(--muted,#71819d)}.password-field{position:relative}.password-field input{padding-right:44px}.password-field>button{position:absolute;right:6px;top:6px;width:34px;height:34px;border:0;background:transparent;color:var(--muted);border-radius:8px;cursor:pointer}.password-strength{display:flex;gap:8px;align-items:center}.password-strength>span{height:6px;flex:1;background:color-mix(in srgb,currentColor 9%,transparent);border-radius:99px;overflow:hidden}.password-strength i{display:block;height:100%;background:#10b981;border-radius:99px}.password-strength small{font-size:12px;color:var(--muted);min-width:35px}.terms-row{display:flex!important;grid-template-columns:none!important;grid-template-rows:none!important;gap:8px!important;align-items:flex-start}.terms-row input{width:17px!important;min-height:17px!important;margin:0}.terms-row span{font-size:14px;font-weight:500!important;line-height:1.45}.finova-login-secondary{border:0;background:transparent;color:#6675f5;font-weight:700;padding:8px 0;font-size:14px;cursor:pointer}

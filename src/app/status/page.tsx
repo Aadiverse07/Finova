@@ -1,0 +1,5 @@
+'use client';
+import { useEffect, useState } from 'react';
+import { PublicContentPage } from '@/components/public-content-page';
+type Health={ok:boolean;version?:string;db?:string};
+export default function StatusPage(){const [health,setHealth]=useState<Health|null>(null);const [error,setError]=useState('');useEffect(()=>{fetch('/api/health',{cache:'no-store'}).then(async r=>{const v=await r.json() as Health;if(!r.ok)throw new Error(`Health endpoint returned ${r.status}.`);setHealth(v)}).catch(e=>setError(e instanceof Error?e.message:'Status unavailable'));},[]);return <PublicContentPage eyebrow="SERVICE STATUS" title="Finova system status" text="A human-readable view of the public health check."><div className="public-card"><h2>{health?.ok?'Operational':'Status check'}</h2><p>{error||`Application: ${health?health.ok?'operational':'reported an unhealthy state':'checking…'}. Database: ${health?.db??'unknown'}. Version: ${health?.version??'unknown'}.`}</p><button type="button" onClick={()=>location.reload()}>Refresh status</button></div></PublicContentPage>}

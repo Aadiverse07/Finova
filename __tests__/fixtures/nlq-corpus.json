@@ -1,0 +1,251 @@
+[
+ {
+  "question": "Show me everything I spent on marketing during September",
+  "expectedEntity": [
+   "expense",
+   "transaction"
+  ]
+ },
+ {
+  "question": "unpaid invoices over ₹20k",
+  "expectedEntity": "invoice"
+ },
+ {
+  "question": "which customers are overdue?",
+  "expectedEntity": "invoice"
+ },
+ {
+  "question": "Rahul ke pending invoices",
+  "expectedEntity": "invoice"
+ },
+ {
+  "question": "biggest expenses last month",
+  "expectedEntity": "expense"
+ },
+ {
+  "question": "travel spend this quarter",
+  "expectedEntity": "expense"
+ },
+ {
+  "question": "what did I pay Adobe",
+  "expectedEntity": "expense"
+ },
+ {
+  "question": "invoices due this week",
+  "expectedEntity": "invoice"
+ },
+ {
+  "question": "payments received in August",
+  "expectedEntity": "transaction"
+ },
+ {
+  "question": "expenses between 5k and 10k in Q2",
+  "expectedEntity": "expense"
+ },
+ {
+  "question": "invoices from Apex last financial year",
+  "expectedEntity": "invoice"
+ },
+ {
+  "question": "cash expenses under ₹500",
+  "expectedEntity": "expense"
+ },
+ {
+  "question": "draft invoices",
+  "expectedEntity": "invoice"
+ },
+ {
+  "question": "2 lakh se zyada ke invoices",
+  "expectedEntity": "invoice"
+ },
+ {
+  "question": "what about October?",
+  "expectedEntity": "invoice"
+ },
+ {
+  "question": "only the paid ones",
+  "expectedEntity": "invoice"
+ },
+ {
+  "question": "delete all marketing expenses",
+  "expectedEntity": "expense",
+  "expectedAction": "write-refusal"
+ },
+ {
+  "question": "who won the cricket match",
+  "expectedEntity": "expense",
+  "expectedAction": "out-of-scope"
+ },
+ {
+  "question": "marketng in sept",
+  "expectedEntity": "expense"
+ },
+ {
+  "question": "everything about Apex",
+  "expectedEntity": [
+   "invoice",
+   "transaction",
+   "expense"
+  ]
+ },
+ {
+  "question": "show paid expenses this FY",
+  "expectedEntity": "expense"
+ },
+ {
+  "question": "list pending invoices",
+  "expectedEntity": "invoice"
+ },
+ {
+  "question": "expenses last 30 days",
+  "expectedEntity": "expense"
+ },
+ {
+  "question": "expenses since April",
+  "expectedEntity": "expense"
+ },
+ {
+  "question": "total spending in May",
+  "expectedEntity": "expense"
+ },
+ {
+  "question": "show GST invoices in Q2",
+  "expectedEntity": "invoice"
+ },
+ {
+  "question": "bank transactions in September",
+  "expectedEntity": "transaction"
+ },
+ {
+  "question": "account balances",
+  "expectedEntity": "account"
+ },
+ {
+  "question": "largest 3 expenses",
+  "expectedEntity": "expense"
+ },
+ {
+  "question": "smallest expense last month",
+  "expectedEntity": "expense"
+ },
+ {
+  "question": "invoices below 5000",
+  "expectedEntity": "invoice"
+ },
+ {
+  "question": "invoices at least 1 lakh",
+  "expectedEntity": "invoice"
+ },
+ {
+  "question": "between 10k and 20k expenses",
+  "expectedEntity": "expense"
+ },
+ {
+  "question": "paid expenses in cash",
+  "expectedEntity": "expense"
+ },
+ {
+  "question": "unpaid bills this month",
+  "expectedEntity": "expense"
+ },
+ {
+  "question": "recent journal entries",
+  "expectedEntity": "transaction"
+ },
+ {
+  "question": "latest transactions",
+  "expectedEntity": "transaction"
+ },
+ {
+  "question": "software spending",
+  "expectedEntity": "expense"
+ },
+ {
+  "question": "travel kharcha pichhle mahine",
+  "expectedEntity": "expense"
+ },
+ {
+  "question": "is mahine ka kharcha",
+  "expectedEntity": "expense"
+ },
+ {
+  "question": "bhugtan in August",
+  "expectedEntity": "transaction"
+ },
+ {
+  "question": "baaki invoices",
+  "expectedEntity": "invoice"
+ },
+ {
+  "question": "show invoices from BlueSky Retail",
+  "expectedEntity": "invoice"
+ },
+ {
+  "question": "what did I pay Uber",
+  "expectedEntity": "expense"
+ },
+ {
+  "question": "expenses from Adobe",
+  "expectedEntity": "expense"
+ },
+ {
+  "question": "show Apex invoices",
+  "expectedEntity": "invoice"
+ },
+ {
+  "question": "show all September expenses",
+  "expectedEntity": "expense"
+ },
+ {
+  "question": "September spending over ₹10k",
+  "expectedEntity": "expense"
+ },
+ {
+  "question": "expenses under 2k this week",
+  "expectedEntity": "expense"
+ },
+ {
+  "question": "top 5 invoices",
+  "expectedEntity": "invoice"
+ },
+ {
+  "question": "how many pending invoices",
+  "expectedEntity": "invoice"
+ },
+ {
+  "question": "how much did I spend last month",
+  "expectedEntity": "expense"
+ },
+ {
+  "question": "total expenses this quarter",
+  "expectedEntity": "expense"
+ },
+ {
+  "question": "show draft invoices this FY",
+  "expectedEntity": "invoice"
+ },
+ {
+  "question": "payments received last month",
+  "expectedEntity": "transaction"
+ },
+ {
+  "question": "manual journal entries this month",
+  "expectedEntity": "transaction"
+ },
+ {
+  "question": "invoice due October",
+  "expectedEntity": "invoice"
+ },
+ {
+  "question": "overdue customer invoices",
+  "expectedEntity": "invoice"
+ },
+ {
+  "question": "account ledger for HDFC Bank",
+  "expectedEntity": "account"
+ },
+ {
+  "question": "show overdue invoices under ₹50k",
+  "expectedEntity": "invoice"
+ }
+]

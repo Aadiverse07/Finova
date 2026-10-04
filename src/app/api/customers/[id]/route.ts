@@ -1,0 +1,8 @@
+import { NextRequest } from 'next/server';
+import { ok, fail } from '@/lib/api/response';
+import { withOrgAuth } from '@/lib/api/withOrgAuth';
+import { db } from '@/lib/db';
+import { Prisma } from '@prisma/client';
+const idOf=(req:NextRequest)=>req.nextUrl.pathname.split('/').filter(Boolean).pop()||'';
+export const GET=withOrgAuth(async(ctx,req)=>{const id=idOf(req);if(!process.env.DATABASE_URL||process.env.DATA_SOURCE==='mock')return fail('Database customer lookup is disabled in mock mode',404);const customer=await db.customer.findFirst({where:{id,orgId:ctx.orgId},include:{contacts:true,addresses:true,tags:true,payments:{include:{allocations:true},orderBy:{date:'desc'}},creditNotes:{orderBy:{date:'desc'}},activities:{orderBy:{date:'desc'}},documents:{orderBy:{createdAt:'desc'}},invoices:{include:{lines:true},orderBy:{issueDate:'desc'}}}});if(!customer)return fail('Customer not found',404);return ok(customer);});
+export const PATCH=withOrgAuth(async(ctx,req)=>{const id=idOf(req);if(!process.env.DATABASE_URL||process.env.DATA_SOURCE==='mock')return fail('Database customer updates are disabled in mock mode',404);const body=await req.json();const allowed=['displayName','legalName','phone','email','gstin','pan','discountTerms','category','assignedTo','source','archived','creditLimitPaise','defaultTaxRate','tdsApplicable','tdsRate'];const data=Object.fromEntries(Object.entries(body).filter(([k])=>allowed.includes(k))) as Record<string,unknown>;if('creditLimitPaise' in data)data.creditLimitPaise=BigInt(String(data.creditLimitPaise));const row=await db.customer.updateMany({where:{id,orgId:ctx.orgId},data:data as Prisma.CustomerUpdateManyMutationInput});return ok(row);});

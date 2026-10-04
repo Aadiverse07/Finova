@@ -1,0 +1,4 @@
+import {NextRequest,NextResponse} from 'next/server';
+import {withOrgAuth} from '@/lib/api/withOrgAuth';
+import {rateLimitAsync} from '@/lib/api/rateLimit';
+export const POST=withOrgAuth(async(ctx,req:NextRequest)=>{if(!(await rateLimitAsync({key:`bank-import:${ctx.orgId}`,windowMs:60000,max:20})))return NextResponse.json({error:'Rate limit exceeded'},{status:429});const form=await req.formData();const file=form.get('file');if(!(file instanceof File))return NextResponse.json({error:'file is required'},{status:400});if(file.size>20*1024*1024)return NextResponse.json({error:'Maximum statement size is 20 MB'},{status:413});return NextResponse.json({accepted:true,fileName:file.name,size:file.size,mode:'client-parser',message:'Validate and persist parsed rows through the bank ingestion service.'});});

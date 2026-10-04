@@ -1,0 +1,492 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // Direct (non-pooled) connection used for migrations/DDL. Locally it may equal DATABASE_URL.
+  directUrl = env("DATABASE_URL_DIRECT")
+}
+
+// Tenant scoping is MANUAL: every business query must filter by `orgId` (docs/04-db-patterns.md).
+// There is no Org model in this standalone schema, so `orgId` is a plain indexed column here; in the
+// shared QuikIT schema it becomes `org Org @relation(..., onDelete: Cascade)` under @@schema("app_finova").
+// See docs/integration/SCHEMA_CHANGE_REQUEST.md.
+
+enum AccountType {
+  ASSET
+  LIABILITY
+  EQUITY
+  INCOME
+  EXPENSE
+}
+
+enum BalanceSide {
+  DEBIT
+  CREDIT
+}
+
+enum JournalSource {
+  MANUAL
+  INVOICE
+  PAYMENT
+  EXPENSE
+  REVERSAL
+  OPENING
+}
+
+enum InvoiceStatus {
+  DRAFT
+  POSTED
+  PAID
+  VOID
+}
+
+model Account {
+  id            String        @id @default(cuid())
+  orgId         String
+  code          String
+  name          String
+  type          AccountType
+  normalBalance BalanceSide
+  isActive      Boolean       @default(true)
+  isSystem      Boolean       @default(false)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  createdBy     String?
+  updatedBy     String?
+  lines         JournalLine[]
+
+  @@unique([orgId, code])
+  @@index([orgId])
+  @@index([orgId, type])
+}
+
+// Journal tables are append-only (DB triggers block UPDATE/DELETE), so no updatedAt/updatedBy here.
+model JournalEntry {
+  id           String        @id @default(cuid())
+  orgId        String
+  entryNo      Int
+  date         DateTime
+  memo         String
+  source       JournalSource
+  sourceRef    String?
+  reversalOfId String?       @unique
+  prevHash     String
+  hash         String
+  createdBy    String
+  createdAt    DateTime      @default(now())
+  lines        JournalLine[]
+
+  @@unique([orgId, entryNo])
+  @@index([orgId])
+  @@index([orgId, date])
+  @@index([orgId, source])
+}
+
+model JournalLine {
+  id          String       @id @default(cuid())
+  orgId       String
+  entryId     String
+  accountId   String
+  debit       BigInt       @default(0)
+  credit      BigInt       @default(0)
+  description String?
+  entry       JournalEntry @relation(fields: [entryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  account     Account      @relation(fields: [accountId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([orgId])
+  @@index([orgId, accountId])
+}
+
+model Invoice {
+  id             String        @id @default(cuid())
+  orgId          String
+  number         String
+  customerName   String
+  customerGstin  String?
+  placeOfSupply  String
+  issueDate      DateTime
+  dueDate        DateTime
+  status         InvoiceStatus
+  subtotal       BigInt
+  cgst           BigInt
+  sgst           BigInt
+  igst           BigInt
+  total          BigInt
+  postingEntryId String?
+  paymentEntryId String?
+  voidEntryId    String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  createdBy      String?
+  updatedBy      String?
+  lines          InvoiceLine[]
+  customerId     String?
+  customer       Customer? @relation(fields: [customerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  paymentAllocations PaymentAllocation[]
+
+  @@unique([orgId, number])
+  @@index([orgId])
+  @@index([orgId, status])
+  @@index([orgId, customerId])
+}
+
+model InvoiceLine {
+  id          String  @id @default(cuid())
+  orgId       String
+  invoiceId   String
+  description String
+  qty         Decimal @db.Decimal(18, 4)
+  unitPrice   BigInt
+  gstRate     Decimal @db.Decimal(5, 2)
+  amount      BigInt
+  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([orgId])
+}
+
+model Expense {
+  id                String   @id @default(cuid())
+  orgId             String
+  date              DateTime
+  vendor            String
+  accountId         String
+  amount            BigInt
+  gstInput          BigInt
+  paidFromAccountId String
+  note              String?
+  entryId           String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  createdBy         String?
+  updatedBy         String?
+
+  @@index([orgId])
+  @@index([orgId, date])
+}
+
+// Per-org sequence counters (e.g. journal entryNo, invoice number).
+
+enum CustomerType {
+  BUSINESS
+  INDIVIDUAL
+}
+
+enum GstTreatment {
+  REGISTERED
+  UNREGISTERED
+  SEZ
+  EXPORT
+  COMPOSITION
+}
+
+enum CustomerStatus {
+  ACTIVE
+  OVERDUE
+  INACTIVE
+  BLOCKED
+}
+
+enum CustomerPaymentMethod {
+  BANK_TRANSFER
+  UPI
+  CARD
+  CASH
+  CHEQUE
+  OTHER
+}
+
+enum CreditNoteStatus {
+  OPEN
+  APPLIED
+  VOID
+}
+
+enum CustomerActivityKind {
+  NOTE
+  REMINDER
+  EMAIL
+  CALL
+  STATUS
+}
+
+model Customer {
+  id                    String                 @id @default(cuid())
+  orgId                 String
+  displayName           String
+  legalName             String
+  type                  CustomerType
+  phone                 String?
+  email                 String?
+  gstin                 String?
+  pan                   String?
+  gstTreatment          GstTreatment           @default(UNREGISTERED)
+  tdsApplicable         Boolean                @default(false)
+  tdsRate               Decimal                @default(0) @db.Decimal(5,2)
+  paymentTermsDays      Int                    @default(30)
+  currency              String                 @default("INR")
+  defaultTaxRate        Decimal                @default(0) @db.Decimal(5,2)
+  creditLimitPaise      BigInt                 @default(0)
+  openingBalancePaise   BigInt                 @default(0)
+  preferredPaymentMethod CustomerPaymentMethod @default(BANK_TRANSFER)
+  discountTerms         String?
+  category              String?
+  assignedTo            String?
+  source                String?
+  customFields          Json?
+  status                CustomerStatus         @default(ACTIVE)
+  archived              Boolean                @default(false)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  createdBy             String?
+  updatedBy             String?
+  invoices              Invoice[]
+  contacts              CustomerContact[]
+  addresses             CustomerAddress[]
+  tags                  CustomerTag[]
+  payments              CustomerPayment[]
+  creditNotes           CreditNote[]
+  activities            CustomerActivity[]
+  documents             CustomerDocument[]
+
+  @@index([orgId])
+  @@index([orgId, displayName])
+  @@index([orgId, gstin])
+  @@index([orgId, phone])
+  @@index([orgId, email])
+  @@index([orgId, archived])
+}
+
+model CustomerContact {
+  id          String   @id @default(cuid())
+  orgId       String
+  customerId  String
+  name        String
+  role        String?
+  email       String?
+  phone       String?
+  isPrimary   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  @@index([orgId, customerId])
+}
+
+model CustomerAddress {
+  id                 String   @id @default(cuid())
+  orgId              String
+  customerId         String
+  kind               String
+  line1              String
+  line2              String?
+  city               String
+  state              String
+  postalCode         String
+  country            String   @default("India")
+  gstPlaceOfSupply   String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  customer           Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  @@index([orgId, customerId])
+}
+
+model CustomerTag {
+  id          String   @id @default(cuid())
+  orgId       String
+  customerId  String
+  value       String
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  @@unique([orgId, customerId, value])
+  @@index([orgId, value])
+}
+
+model CustomerPayment {
+  id           String                  @id @default(cuid())
+  orgId        String
+  customerId   String
+  date         DateTime
+  amountPaise  BigInt
+  method       CustomerPaymentMethod
+  reference    String?
+  tdsPaise     BigInt                  @default(0)
+  reversed     Boolean                 @default(false)
+  note         String?
+  createdAt    DateTime                @default(now())
+  createdBy    String?
+  customer     Customer                @relation(fields: [customerId], references: [id], onDelete: NoAction)
+  allocations PaymentAllocation[]
+  @@index([orgId, customerId, date])
+  @@index([orgId, reference])
+}
+
+model PaymentAllocation {
+  id          String          @id @default(cuid())
+  orgId       String
+  paymentId   String
+  invoiceId   String
+  amountPaise BigInt
+  payment     CustomerPayment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  invoice     Invoice          @relation(fields: [invoiceId], references: [id], onDelete: NoAction)
+  @@unique([paymentId, invoiceId])
+  @@index([orgId, invoiceId])
+}
+
+model CreditNote {
+  id                String           @id @default(cuid())
+  orgId             String
+  customerId        String
+  date              DateTime
+  number            String
+  amountPaise       BigInt
+  reason            String
+  appliedInvoiceId  String?
+  status            CreditNoteStatus @default(OPEN)
+  createdAt         DateTime         @default(now())
+  customer          Customer         @relation(fields: [customerId], references: [id], onDelete: NoAction)
+  @@unique([orgId, number])
+  @@index([orgId, customerId, date])
+}
+
+model CustomerActivity {
+  id          String               @id @default(cuid())
+  orgId       String
+  customerId  String
+  date        DateTime             @default(now())
+  kind        CustomerActivityKind
+  text        String
+  createdBy   String?
+  customer    Customer             @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  @@index([orgId, customerId, date])
+}
+
+model CustomerDocument {
+  id          String   @id @default(cuid())
+  orgId       String
+  customerId  String
+  name        String
+  kind        String
+  storageKey  String?
+  createdAt   DateTime @default(now())
+  createdBy   String?
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: NoAction)
+  @@index([orgId, customerId, createdAt])
+}
+
+model Counter {
+  orgId String
+  name  String
+  value Int
+
+  @@id([orgId, name])
+}
+
+
+enum BankAccountType { SAVINGS CURRENT CREDIT_CARD OTHER }
+enum BankSource { STATEMENT_UPLOAD ACCOUNT_AGGREGATOR SANDBOX_AA PAYMENT_GATEWAY }
+enum BankConsentStatus { PENDING ACTIVE PAUSED REVOKED EXPIRED REJECTED }
+enum BankDirection { DEBIT CREDIT }
+enum BankMode { UPI NEFT IMPS RTGS CARD CHEQUE ATM CASH_DEPOSIT BANK_TRANSFER OTHER }
+enum BankReviewStatus { UNREVIEWED CATEGORISED MATCHED IGNORED NEEDS_ATTENTION }
+
+model BankAccount {
+  id String @id @default(cuid())
+  orgId String
+  bankName String
+  accountType BankAccountType
+  maskedAccountNumber String
+  balancePaise BigInt @default(0)
+  balanceDate DateTime
+  source BankSource
+  businessUse Boolean @default(true)
+  syncStatus String @default("CONNECTED")
+  lastSyncedAt DateTime?
+  reconciledUpTo DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  consents BankConsent[]
+  rawTransactions BankRawTransaction[]
+  transactions BankTransaction[]
+  @@index([orgId])
+  @@index([orgId, maskedAccountNumber])
+}
+model BankConsent {
+  id String @id @default(cuid())
+  orgId String
+  provider String
+  status BankConsentStatus
+  purpose String
+  fiTypes Json
+  startDate DateTime
+  endDate DateTime
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+  accountId String
+  account BankAccount @relation(fields:[accountId],references:[id],onDelete:NoAction)
+  @@index([orgId, status])
+  @@index([orgId, accountId])
+}
+model BankRawTransaction {
+  id String @id @default(cuid())
+  orgId String
+  accountId String
+  source BankSource
+  sourceTransactionId String?
+  date DateTime
+  amountPaise BigInt
+  direction BankDirection
+  narration String
+  reference String?
+  mode BankMode
+  runningBalancePaise BigInt?
+  rawPayload Json
+  fingerprint String
+  importedAt DateTime @default(now())
+  account BankAccount @relation(fields:[accountId],references:[id],onDelete:NoAction)
+  @@index([orgId, accountId, date])
+  @@index([orgId, fingerprint])
+  @@unique([orgId, accountId, fingerprint])
+  @@index([orgId, sourceTransactionId])
+}
+model BankTransaction {
+  id String @id @default(cuid())
+  orgId String
+  rawId String @unique
+  accountId String
+  merchant String
+  category String?
+  confidence Decimal @db.Decimal(5,4)
+  suggestionReason String
+  customerId String?
+  expenseId String?
+  invoiceIds Json
+  status BankReviewStatus @default(UNREVIEWED)
+  business Boolean @default(true)
+  tags Json
+  autoApplied Boolean @default(false)
+  matchedReceiptId String?
+  matchReason String?
+  reviewAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  account BankAccount @relation(fields:[accountId],references:[id],onDelete:NoAction)
+  @@index([orgId, accountId, status])
+  @@index([orgId, merchant])
+}
+model BankRule {
+  id String @id @default(cuid())
+  orgId String
+  name String
+  narrationContains String?
+  minAmountPaise BigInt?
+  maxAmountPaise BigInt?
+  direction BankDirection?
+  category String
+  tag String?
+  enabled Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([orgId, enabled])
+}

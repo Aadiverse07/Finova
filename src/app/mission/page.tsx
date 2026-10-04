@@ -1,0 +1,2 @@
+import { PublicContentPage } from '@/components/public-content-page';
+export default function MissionPage(){return <PublicContentPage eyebrow="COMPANY" title="Mission" text="Make financial records easier to understand without removing the accounting structure behind them."><div className="public-card"><h2>Clear records, clear workflows</h2><p>The product is designed to keep entries balanced, make business activity easier to review, and present useful financial information in a form that is practical for day-to-day work.</p></div></PublicContentPage>}
