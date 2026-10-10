@@ -1,9 +1,0 @@
-{
-  "worker": true,
-  "core": true,
-  "wasm": true,
-  "languageData": [
-    "eng.traineddata.gz",
-    "hin.traineddata.gz"
-  ]
-}
