@@ -57,8 +57,8 @@ export function routeVoiceCommand(text: string): AssistantAction | null {
   const invoiceCmd = parseInvoiceVoice(q); if (invoiceCmd) return invoiceCmd;
   // Keep natural-language financial questions on Brain #1 so periods, customer context and filters are preserved.
   if (/\b(open|show|go to|kholo|दिखाओ)\b.*\b(forecast|cash forecast|पूर्वानुमान)\b/.test(lower)) return { action: 'show_forecast', params: {} };
-  const module = lower.match(/\b(?:open|go to|kholo|जाएं|खोलो)\s+(dashboard|journal|transactions|invoices|expenses|reports|accounts|customers|banking|bank|forecast)\b/);
-  if (module) return { action: 'open_module', params: { module: module[1] ?? '' } };
+  const moduleMatch = lower.match(/\b(?:open|go to|kholo|जाएं|खोलो)\s+(dashboard|journal|transactions|invoices|expenses|reports|accounts|customers|banking|bank|forecast)\b/);
+  if (moduleMatch) return { action: 'open_module', params: { module: moduleMatch[1] ?? '' } };
   if (/\b(scan|scanning|receipt|रसीद)\b/.test(lower)) return { action: 'scan_receipt', params: {} };
   if (/\b(dark mode|light mode|toggle theme|theme)\b/.test(lower)) return { action: 'toggle_theme', params: {} };
   const lang = lower.match(/\b(?:change|switch|set)\s+(?:ai\s+)?language\s+(?:to\s+)?(english|hindi|hinglish|हिन्दी|हिंदी)\b/);
